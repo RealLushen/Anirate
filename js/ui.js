@@ -188,9 +188,15 @@ class AnimeUI {
         if (mainRating) {
             const mainRatingEl = document.createElement('div');
             mainRatingEl.className = 'main-rating';
+            
+            // Add special class for average ratings
+            const isAverage = mainRating.isAverage || mainRating.source.includes('Avg');
+            const scoreClass = isAverage ? 'rating-score-large average-highlight' : 'rating-score-large';
+            const sourceClass = isAverage ? 'rating-source average-source' : 'rating-source';
+            
             mainRatingEl.innerHTML = `
-                <div class="rating-score-large">${mainRating.score}</div>
-                <div class="rating-source">${mainRating.source}</div>
+                <div class="${scoreClass}">${mainRating.score}</div>
+                <div class="${sourceClass}">${mainRating.source}</div>
             `;
             ratingsContainer.appendChild(mainRatingEl);
         }
@@ -213,7 +219,17 @@ class AnimeUI {
     }
 
     getMainRating(anime) {
-        // Prioritize the highest available rating
+        // Prioritize average rating if available
+        if (anime.averageRating && anime.ratingCount > 1) {
+            return {
+                score: anime.averageRating,
+                source: `Avg (${anime.ratingCount})`,
+                max: '10',
+                isAverage: true
+            };
+        }
+
+        // If enhanced ratings are available, calculate average on the fly
         if (anime.enhancedRatings) {
             const ratings = [
                 anime.enhancedRatings.anilist,
@@ -221,9 +237,21 @@ class AnimeUI {
                 anime.enhancedRatings.imdb
             ].filter(r => r && r.score !== CONFIG.DEFAULTS.FALLBACK_RATING);
             
-            if (ratings.length > 0) {
-                // Return the highest rated source
-                return ratings.sort((a, b) => parseFloat(b.score) - parseFloat(a.score))[0];
+            if (ratings.length > 1) {
+                const validScores = ratings.map(r => parseFloat(r.score)).filter(s => !isNaN(s));
+                const average = (validScores.reduce((a, b) => a + b) / validScores.length).toFixed(1);
+                return {
+                    score: average,
+                    source: `Avg (${ratings.length})`,
+                    max: '10',
+                    isAverage: true
+                };
+            } else if (ratings.length === 1) {
+                return {
+                    score: ratings[0].score,
+                    source: ratings[0].source,
+                    max: ratings[0].max
+                };
             }
         }
 
@@ -485,15 +513,17 @@ class AnimeUI {
             
             allRatings.forEach(rating => {
                 const colorClass = this.getRatingColorClass(parseFloat(rating.score));
+                const platformInfo = this.getPlatformInfo(rating.source);
+                
                 ratingsHTML += `
-                    <div class="rating-card-large ${rating.source.toLowerCase()}">
+                    <div class="rating-card-large ${rating.source.toLowerCase().replace(' ', '')}">
                         <div class="rating-platform">
-                            <img src="${this.getPlatformIcon(rating.source)}" alt="${rating.source}" class="platform-icon">
+                            <i class="${platformInfo.icon}" style="color: ${platformInfo.color}"></i>
                             <span class="platform-name">${rating.source}</span>
                         </div>
                         <div class="rating-score-huge ${colorClass}">${rating.score}</div>
                         <div class="rating-max">/ ${rating.max}</div>
-                        ${rating.voters ? `<div class="rating-voters">${rating.voters} votes</div>` : ''}
+                        ${rating.voters ? `<div class="rating-voters">${rating.voters}</div>` : ''}
                     </div>
                 `;
             });
@@ -528,6 +558,28 @@ class AnimeUI {
         ratingsHTML += '</div>';
 
         return ratingsHTML;
+    }
+
+    getPlatformInfo(source) {
+        const platforms = {
+            'AniList': {
+                icon: 'fas fa-chart-line',
+                color: '#02a9ff'
+            },
+            'MyAnimeList': {
+                icon: 'fas fa-list-ul',
+                color: '#2e51a2'
+            },
+            'IMDB': {
+                icon: 'fas fa-film',
+                color: '#f5c518'
+            }
+        };
+        
+        return platforms[source] || {
+            icon: 'fas fa-star',
+            color: '#6366f1'
+        };
     }
 
     getAllRatings(anime) {
@@ -612,15 +664,7 @@ class AnimeUI {
         return 'rating-poor';
     }
 
-    getPlatformIcon(source) {
-        const icons = {
-            'AniList': 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%2302a9ff"><path d="M24 17.53v2.421c0 .71-.391 1.101-1.1 1.101h-5.85c-.71 0-1.1-.391-1.1-1.101V17.53c0-.71.39-1.101 1.1-1.101h5.85c.709 0 1.1.391 1.1 1.101z"/><path d="M14.22 8.1c.71 0 1.1.391 1.1 1.101v10.431c0 .71-.39 1.101-1.1 1.101H8.37c-.71 0-1.1-.391-1.1-1.101V9.201c0-.71.39-1.101 1.1-1.101h5.85z"/><path d="M6.67 3.21c.71 0 1.1.391 1.1 1.101v15.321c0 .71-.39 1.101-1.1 1.101H.82c-.71 0-1.1-.391-1.1-1.101V4.311c0-.71.39-1.101 1.1-1.101h5.85z"/></svg>',
-            'MyAnimeList': 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%232e51a2"><rect width="24" height="24" rx="4"/><text x="12" y="16" font-family="Arial" font-size="8" fill="white" text-anchor="middle">MAL</text></svg>',
-            'IMDB': 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%23f5c518"><rect width="24" height="24" rx="4" fill="%23000"/><rect x="2" y="4" width="20" height="16" rx="2" fill="%23f5c518"/><text x="12" y="14" font-family="Arial" font-size="6" font-weight="bold" text-anchor="middle">IMDb</text></svg>'
-        };
-        
-        return icons[source] || 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%236366f1"><circle cx="12" cy="12" r="10"/></svg>';
-    }
+
 
     createModalGenres(genres) {
         if (!genres || genres.length === 0) return '';
