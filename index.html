@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AnimeHub - Ratings from IMDB, MyAnimeList & AniList</title>
+    <link rel="stylesheet" href="css/main.css">
+    <link rel="stylesheet" href="css/components.css">
+    <link rel="stylesheet" href="css/animations.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="nav-brand">
+                <i class="fas fa-star"></i>
+                <span>AnimeHub</span>
+            </div>
+            <div class="nav-search">
+                <div class="search-container">
+                    <i class="fas fa-search search-icon"></i>
+                    <input type="text" id="navSearch" placeholder="Search anime (EN/DE/JP)..." class="search-input">
+                    <div class="search-suggestions" id="navSuggestions"></div>
+                </div>
+            </div>
+            <div class="nav-menu">
+                <a href="#home" class="nav-link active">Home</a>
+                <a href="#trending" class="nav-link">Trending</a>
+                <a href="#top-rated" class="nav-link">Top Rated</a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <!-- Hero Section -->
+        <section class="hero">
+            <div class="hero-content">
+                <h1 class="hero-title">
+                    Discover Anime Ratings
+                    <span class="gradient-text">Across Platforms</span>
+                </h1>
+                <p class="hero-subtitle">
+                    Compare ratings from IMDB, MyAnimeList, and AniList all in one place
+                </p>
+                <div class="hero-search">
+                    <div class="search-container main-search">
+                        <i class="fas fa-search search-icon"></i>
+                        <input type="text" id="mainSearch" placeholder="Search for your favorite anime..." class="search-input">
+                        <div class="search-suggestions" id="mainSuggestions"></div>
+                    </div>
+                </div>
+                <div class="rating-sources">
+                    <div class="source-item">
+                        <img src="https://upload.wikimedia.org/wikipedia/commons/6/69/IMDB_Logo_2016.svg" alt="IMDB" class="source-logo">
+                        <span>IMDB</span>
+                    </div>
+                    <div class="source-item">
+                        <img src="https://anilist.co/img/icons/icon.svg" alt="AniList" class="source-logo">
+                        <span>AniList</span>
+                    </div>
+                    <div class="source-item">
+                        <i class="fas fa-list"></i>
+                        <span>MyAnimeList</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Featured Anime Section -->
+        <section class="featured-section">
+            <div class="section-header">
+                <h2 class="section-title">Trending Now</h2>
+                <p class="section-subtitle">Most popular anime this season</p>
+            </div>
+            <div class="anime-grid" id="trendingGrid">
+                <!-- Trending anime will be loaded here -->
+            </div>
+        </section>
+
+        <!-- Top Rated Section -->
+        <section class="top-rated-section">
+            <div class="section-header">
+                <h2 class="section-title">Top Rated</h2>
+                <p class="section-subtitle">Highest rated anime of all time</p>
+            </div>
+            <div class="anime-grid" id="topRatedGrid">
+                <!-- Top rated anime will be loaded here -->
+            </div>
+        </section>
+
+        <!-- New Releases Section -->
+        <section class="new-releases-section">
+            <div class="section-header">
+                <h2 class="section-title">New Releases</h2>
+                <p class="section-subtitle">Latest anime releases</p>
+            </div>
+            <div class="anime-grid" id="newReleasesGrid">
+                <!-- New releases will be loaded here -->
+            </div>
+        </section>
+    </main>
+
+    <!-- Anime Detail Modal -->
+    <div class="modal-overlay" id="animeModal">
+        <div class="modal-content">
+            <button class="modal-close" id="modalClose">
+                <i class="fas fa-times"></i>
+            </button>
+            <div class="modal-body" id="modalBody">
+                <!-- Anime details will be loaded here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Loading Spinner -->
+    <div class="loading-spinner" id="loadingSpinner">
+        <div class="spinner"></div>
+        <p>Loading anime data...</p>
+    </div>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="footer-content">
+            <div class="footer-section">
+                <h3>AnimeHub</h3>
+                <p>Your ultimate destination for anime ratings and reviews across multiple platforms.</p>
+            </div>
+            <div class="footer-section">
+                <h4>Sources</h4>
+                <ul>
+                    <li>IMDB Ratings</li>
+                    <li>MyAnimeList</li>
+                    <li>AniList</li>
+                </ul>
+            </div>
+            <div class="footer-section">
+                <h4>Features</h4>
+                <ul>
+                    <li>Multi-language Search</li>
+                    <li>Episode Ratings</li>
+                    <li>Streaming Info</li>
+                </ul>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p>&copy; 2025 AnimeHub. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <!-- Scripts -->
+    <script src="js/config.js"></script>
+    <script src="js/api.js"></script>
+    <script src="js/ui.js"></script>
+    <script src="js/search.js"></script>
+    <script src="js/modal.js"></script>
+    <script src="js/main.js"></script>
+</body>
+</html>

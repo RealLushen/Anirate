@@ -1,0 +1,645 @@
+/* ===============================
+   KEYFRAME ANIMATIONS
+=============================== */
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes fadeInDown {
+    from {
+        opacity: 0;
+        transform: translateY(-30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes fadeInLeft {
+    from {
+        opacity: 0;
+        transform: translateX(-30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+@keyframes fadeInRight {
+    from {
+        opacity: 0;
+        transform: translateX(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+@keyframes slideInFromBottom {
+    from {
+        opacity: 0;
+        transform: translateY(100px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes slideInFromTop {
+    from {
+        opacity: 0;
+        transform: translateY(-100px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes scaleIn {
+    from {
+        opacity: 0;
+        transform: scale(0.8);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+@keyframes spin {
+    from {
+        transform: rotate(0deg);
+    }
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+@keyframes pulse {
+    0%, 100% {
+        transform: scale(1);
+        opacity: 1;
+    }
+    50% {
+        transform: scale(1.05);
+        opacity: 0.8;
+    }
+}
+
+@keyframes glow {
+    0%, 100% {
+        box-shadow: 0 0 20px var(--accent-glow);
+    }
+    50% {
+        box-shadow: 0 0 40px var(--accent-glow), 0 0 60px var(--accent-glow);
+    }
+}
+
+@keyframes float {
+    0%, 100% {
+        transform: translateY(0px) rotate(0deg);
+    }
+    33% {
+        transform: translateY(-10px) rotate(1deg);
+    }
+    66% {
+        transform: translateY(5px) rotate(-1deg);
+    }
+}
+
+@keyframes bounce {
+    0%, 20%, 53%, 80%, 100% {
+        transform: translateY(0);
+    }
+    40%, 43% {
+        transform: translateY(-10px);
+    }
+    70% {
+        transform: translateY(-5px);
+    }
+    90% {
+        transform: translateY(-2px);
+    }
+}
+
+@keyframes shake {
+    0%, 100% {
+        transform: translateX(0);
+    }
+    10%, 30%, 50%, 70%, 90% {
+        transform: translateX(-5px);
+    }
+    20%, 40%, 60%, 80% {
+        transform: translateX(5px);
+    }
+}
+
+@keyframes shimmer {
+    0% {
+        background-position: -200% 0;
+    }
+    100% {
+        background-position: 200% 0;
+    }
+}
+
+@keyframes ripple {
+    0% {
+        transform: scale(0);
+        opacity: 1;
+    }
+    100% {
+        transform: scale(4);
+        opacity: 0;
+    }
+}
+
+@keyframes gradientShift {
+    0%, 100% {
+        background-position: 0% 50%;
+    }
+    50% {
+        background-position: 100% 50%;
+    }
+}
+
+@keyframes typing {
+    from {
+        width: 0;
+    }
+    to {
+        width: 100%;
+    }
+}
+
+@keyframes blink {
+    0%, 50% {
+        opacity: 1;
+    }
+    51%, 100% {
+        opacity: 0;
+    }
+}
+
+/* ===============================
+   ENTRANCE ANIMATIONS
+=============================== */
+
+.animate-fade-in {
+    animation: fadeIn 0.6s ease-out forwards;
+}
+
+.animate-fade-in-up {
+    animation: fadeInUp 0.6s ease-out forwards;
+}
+
+.animate-fade-in-down {
+    animation: fadeInDown 0.6s ease-out forwards;
+}
+
+.animate-fade-in-left {
+    animation: fadeInLeft 0.6s ease-out forwards;
+}
+
+.animate-fade-in-right {
+    animation: fadeInRight 0.6s ease-out forwards;
+}
+
+.animate-slide-in-bottom {
+    animation: slideInFromBottom 0.8s ease-out forwards;
+}
+
+.animate-slide-in-top {
+    animation: slideInFromTop 0.8s ease-out forwards;
+}
+
+.animate-scale-in {
+    animation: scaleIn 0.5s ease-out forwards;
+}
+
+/* Staggered animations for grid items */
+.anime-card:nth-child(1) { animation-delay: 0.1s; }
+.anime-card:nth-child(2) { animation-delay: 0.2s; }
+.anime-card:nth-child(3) { animation-delay: 0.3s; }
+.anime-card:nth-child(4) { animation-delay: 0.4s; }
+.anime-card:nth-child(5) { animation-delay: 0.5s; }
+.anime-card:nth-child(6) { animation-delay: 0.6s; }
+.anime-card:nth-child(7) { animation-delay: 0.7s; }
+.anime-card:nth-child(8) { animation-delay: 0.8s; }
+
+/* ===============================
+   LOADING ANIMATIONS
+=============================== */
+
+.loading-pulse {
+    animation: pulse 2s ease-in-out infinite;
+}
+
+.loading-spin {
+    animation: spin 1s linear infinite;
+}
+
+.loading-bounce {
+    animation: bounce 1.4s ease-in-out infinite;
+}
+
+.skeleton {
+    background: linear-gradient(
+        90deg,
+        var(--bg-tertiary) 25%,
+        var(--bg-card) 50%,
+        var(--bg-tertiary) 75%
+    );
+    background-size: 200% 100%;
+    animation: shimmer 1.5s ease-in-out infinite;
+    border-radius: var(--radius-sm);
+}
+
+.skeleton-card {
+    height: 400px;
+    border-radius: var(--radius-lg);
+}
+
+.skeleton-text {
+    height: 1rem;
+    margin-bottom: 0.5rem;
+}
+
+.skeleton-text.short {
+    width: 60%;
+}
+
+.skeleton-text.medium {
+    width: 80%;
+}
+
+.skeleton-text.long {
+    width: 100%;
+}
+
+/* ===============================
+   INTERACTIVE ANIMATIONS
+=============================== */
+
+.hover-glow:hover {
+    animation: glow 2s ease-in-out infinite;
+}
+
+.hover-float:hover {
+    animation: float 3s ease-in-out infinite;
+}
+
+.hover-bounce:hover {
+    animation: bounce 0.6s ease-in-out;
+}
+
+.hover-shake:hover {
+    animation: shake 0.5s ease-in-out;
+}
+
+/* Button Click Effects */
+.btn-click {
+    position: relative;
+    overflow: hidden;
+}
+
+.btn-click::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 0;
+    height: 0;
+    background: rgba(255, 255, 255, 0.3);
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+    transition: width 0.6s, height 0.6s;
+}
+
+.btn-click:active::before {
+    width: 300px;
+    height: 300px;
+}
+
+/* Search Input Focus Animation */
+.search-input:focus {
+    animation: pulse 0.3s ease-in-out;
+}
+
+/* Card Hover Animations */
+.anime-card {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.anime-card:hover {
+    animation: none;
+}
+
+.anime-card:hover .card-image {
+    transform: scale(1.1) rotate(1deg);
+}
+
+.anime-card:hover .badge {
+    transform: scale(1.1);
+    animation: pulse 1s ease-in-out infinite;
+}
+
+/* ===============================
+   SCROLL ANIMATIONS
+=============================== */
+
+.scroll-reveal {
+    opacity: 0;
+    transform: translateY(30px);
+    transition: all 0.6s ease-out;
+}
+
+.scroll-reveal.revealed {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.scroll-reveal-left {
+    opacity: 0;
+    transform: translateX(-30px);
+    transition: all 0.6s ease-out;
+}
+
+.scroll-reveal-left.revealed {
+    opacity: 1;
+    transform: translateX(0);
+}
+
+.scroll-reveal-right {
+    opacity: 0;
+    transform: translateX(30px);
+    transition: all 0.6s ease-out;
+}
+
+.scroll-reveal-right.revealed {
+    opacity: 1;
+    transform: translateX(0);
+}
+
+.scroll-reveal-scale {
+    opacity: 0;
+    transform: scale(0.8);
+    transition: all 0.6s ease-out;
+}
+
+.scroll-reveal-scale.revealed {
+    opacity: 1;
+    transform: scale(1);
+}
+
+/* ===============================
+   GRADIENT ANIMATIONS
+=============================== */
+
+.animated-gradient {
+    background: linear-gradient(
+        -45deg,
+        var(--accent-primary),
+        var(--accent-secondary),
+        #ec4899,
+        var(--accent-primary)
+    );
+    background-size: 400% 400%;
+    animation: gradientShift 8s ease infinite;
+}
+
+.gradient-text-animated {
+    background: linear-gradient(
+        -45deg,
+        var(--accent-primary),
+        var(--accent-secondary),
+        #ec4899,
+        var(--accent-primary)
+    );
+    background-size: 400% 400%;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    animation: gradientShift 6s ease infinite;
+}
+
+/* ===============================
+   TYPING ANIMATION
+=============================== */
+
+.typing-effect {
+    overflow: hidden;
+    border-right: 2px solid var(--accent-primary);
+    white-space: nowrap;
+    margin: 0 auto;
+    animation: typing 3.5s steps(40, end), blink 0.75s step-end infinite;
+}
+
+/* ===============================
+   PARTICLE EFFECTS
+=============================== */
+
+.particles {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    pointer-events: none;
+}
+
+.particle {
+    position: absolute;
+    width: 4px;
+    height: 4px;
+    background: var(--accent-primary);
+    border-radius: 50%;
+    opacity: 0.3;
+    animation: floatParticle 6s ease-in-out infinite;
+}
+
+@keyframes floatParticle {
+    0%, 100% {
+        transform: translateY(100vh) translateX(0px) scale(0);
+        opacity: 0;
+    }
+    10% {
+        opacity: 0.3;
+        transform: scale(1);
+    }
+    90% {
+        opacity: 0.3;
+        transform: scale(1);
+    }
+    100% {
+        transform: translateY(-100px) translateX(100px) scale(0);
+        opacity: 0;
+    }
+}
+
+.particle:nth-child(2n) {
+    animation-delay: -2s;
+    animation-duration: 8s;
+}
+
+.particle:nth-child(3n) {
+    animation-delay: -4s;
+    animation-duration: 10s;
+}
+
+/* ===============================
+   NOTIFICATION ANIMATIONS
+=============================== */
+
+.notification {
+    transform: translateX(100%);
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.notification.show {
+    transform: translateX(0);
+}
+
+.notification.hide {
+    transform: translateX(100%);
+}
+
+/* ===============================
+   PROGRESSIVE ENHANCEMENT
+=============================== */
+
+/* Reduce motion for users who prefer it */
+@media (prefers-reduced-motion: reduce) {
+    * {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
+    
+    .scroll-reveal,
+    .scroll-reveal-left,
+    .scroll-reveal-right,
+    .scroll-reveal-scale {
+        opacity: 1;
+        transform: none;
+    }
+}
+
+/* ===============================
+   PERFORMANCE OPTIMIZATIONS
+=============================== */
+
+/* Use transform instead of changing layout properties */
+.gpu-accelerated {
+    transform: translateZ(0);
+    will-change: transform;
+}
+
+/* Optimize for smooth animations */
+.smooth-animation {
+    backface-visibility: hidden;
+    perspective: 1000px;
+}
+
+/* ===============================
+   MICRO-INTERACTIONS
+=============================== */
+
+/* Button Press Effect */
+.btn:active {
+    transform: translateY(-2px) scale(0.98);
+}
+
+/* Link Hover Effect */
+.nav-link::after {
+    content: '';
+    position: absolute;
+    bottom: -2px;
+    left: 50%;
+    width: 0;
+    height: 2px;
+    background: var(--accent-primary);
+    transition: all 0.3s ease;
+    transform: translateX(-50%);
+}
+
+.nav-link:hover::after,
+.nav-link.active::after {
+    width: 100%;
+}
+
+/* Search Icon Rotate */
+.search-input:focus + .search-icon {
+    transform: translateY(-50%) rotate(90deg);
+    color: var(--accent-primary);
+}
+
+/* Rating Card Flip Effect */
+.rating-card {
+    perspective: 1000px;
+}
+
+.rating-card:hover {
+    transform: rotateY(5deg) translateY(-2px);
+}
+
+/* Genre Tag Hover */
+.genre-tag:hover {
+    transform: scale(1.1);
+    background: var(--accent-primary);
+    color: white;
+}
+
+/* Modal Backdrop Animation */
+.modal-backdrop {
+    transition: filter 0.5s ease;
+}
+
+.modal-overlay.active .modal-backdrop {
+    filter: blur(2px) brightness(0.7);
+}
+
+/* Suggestion Item Slide */
+.suggestion-item {
+    transform: translateX(-10px);
+    opacity: 0;
+    animation: slideInLeft 0.3s ease-out forwards;
+}
+
+@keyframes slideInLeft {
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+.suggestion-item:nth-child(1) { animation-delay: 0.1s; }
+.suggestion-item:nth-child(2) { animation-delay: 0.2s; }
+.suggestion-item:nth-child(3) { animation-delay: 0.3s; }
+.suggestion-item:nth-child(4) { animation-delay: 0.4s; }
+.suggestion-item:nth-child(5) { animation-delay: 0.5s; }
