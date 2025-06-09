@@ -90,6 +90,91 @@ class AnimeHubApp {
         });
     }
 
+    startPerformanceMonitoring() {
+        this.performanceMetrics.startTime = performance.now();
+        
+        // Monitor load times
+        if ('PerformanceObserver' in window) {
+            try {
+                const observer = new PerformanceObserver((list) => {
+                    for (const entry of list.getEntries()) {
+                        if (entry.entryType === 'navigation') {
+                            this.performanceMetrics.pageLoad = entry.loadEventEnd - entry.loadEventStart;
+                        }
+                    }
+                });
+                observer.observe({ entryTypes: ['navigation'] });
+            } catch (error) {
+                console.warn('Performance observer setup failed:', error);
+            }
+        }
+    }
+
+    setupGlobalErrorHandling() {
+        // Global error handler
+        window.addEventListener('error', (event) => {
+            this.handleGlobalError(event.error, 'JavaScript Error');
+        });
+        
+        // Unhandled promise rejection handler
+        window.addEventListener('unhandledrejection', (event) => {
+            this.handleGlobalError(event.reason, 'Unhandled Promise Rejection');
+            event.preventDefault(); // Prevent console error
+        });
+        
+        // API error handler
+        this.setupAPIErrorHandler();
+    }
+
+    setupAPIErrorHandler() {
+        const originalFetch = window.fetch;
+        window.fetch = async (...args) => {
+            try {
+                const response = await originalFetch(...args);
+                if (!response.ok) {
+                    this.handleAPIError(response, args[0]);
+                }
+                return response;
+            } catch (error) {
+                this.handleNetworkError(error, args[0]);
+                throw error;
+            }
+        };
+    }
+
+    checkBrowserCompatibility() {
+        const requiredFeatures = [
+            'fetch',
+            'Promise'
+        ];
+        
+        const missingFeatures = requiredFeatures.filter(feature => {
+            return !(feature in window);
+        });
+        
+        if (missingFeatures.length > 0) {
+            console.warn('Missing browser features:', missingFeatures);
+            this.showCompatibilityWarning(missingFeatures);
+        }
+    }
+
+    setupNetworkMonitoring() {
+        // Online/offline detection
+        window.addEventListener('online', () => {
+            this.isOnline = true;
+            this.handleNetworkChange(true);
+        });
+        
+        window.addEventListener('offline', () => {
+            this.isOnline = false;
+            this.handleNetworkChange(false);
+        });
+    }
+
+    // ===============================
+    //   COMPONENT INITIALIZATION
+    // ===============================
+
     async initializeComponentsWithErrorChecking() {
         console.log('🔧 Initializing components with error checking...');
         
@@ -150,127 +235,6 @@ class AnimeHubApp {
         throw new Error(`Components not loaded after 5 seconds: ${missing.join(', ')}`);
     }
 
-    async loadInitialContentAsync() {
-        // Load content asynchronously without blocking initialization
-        try {
-            setTimeout(async () => {
-                await this.loadInitialContent();
-            }, 500);
-        } catch (error) {
-            console.warn('Non-critical: Failed to load initial content:', error);
-        }
-    }
-
-    startPerformanceMonitoring() {
-        this.performanceMetrics.startTime = performance.now();
-        
-        // Monitor load times
-        if ('PerformanceObserver' in window) {
-            const observer = new PerformanceObserver((list) => {
-                for (const entry of list.getEntries()) {
-                    if (entry.entryType === 'navigation') {
-                        this.performanceMetrics.pageLoad = entry.loadEventEnd - entry.loadEventStart;
-                    }
-                }
-            });
-            observer.observe({ entryTypes: ['navigation'] });
-        }
-    }
-
-    setupGlobalErrorHandling() {
-        // Global error handler
-        window.addEventListener('error', (event) => {
-            this.handleGlobalError(event.error, 'JavaScript Error');
-        });
-        
-        // Unhandled promise rejection handler
-        window.addEventListener('unhandledrejection', (event) => {
-            this.handleGlobalError(event.reason, 'Unhandled Promise Rejection');
-            event.preventDefault(); // Prevent console error
-        });
-        
-        // API error handler
-        this.setupAPIErrorHandler();
-    }
-
-    setupAPIErrorHandler() {
-        const originalFetch = window.fetch;
-        window.fetch = async (...args) => {
-            try {
-                const response = await originalFetch(...args);
-                if (!response.ok) {
-                    this.handleAPIError(response, args[0]);
-                }
-                return response;
-            } catch (error) {
-                this.handleNetworkError(error, args[0]);
-                throw error;
-            }
-        };
-    }
-
-    checkBrowserCompatibility() {
-        const requiredFeatures = [
-            'fetch',
-            'Promise',
-            'IntersectionObserver',
-            'ResizeObserver'
-        ];
-        
-        const missingFeatures = requiredFeatures.filter(feature => {
-            return !(feature in window) && !(feature in window.constructor.prototype);
-        });
-        
-        if (missingFeatures.length > 0) {
-            console.warn('Missing browser features:', missingFeatures);
-            this.showCompatibilityWarning(missingFeatures);
-        }
-    }
-
-    setupNetworkMonitoring() {
-        // Online/offline detection
-        window.addEventListener('online', () => {
-            this.isOnline = true;
-            this.handleNetworkChange(true);
-        });
-        
-        window.addEventListener('offline', () => {
-            this.isOnline = false;
-            this.handleNetworkChange(false);
-        });
-        
-        // Connection quality monitoring
-        if ('connection' in navigator) {
-            const connection = navigator.connection;
-            this.monitorConnectionQuality(connection);
-        }
-    }
-
-    // ===============================
-    //   COMPONENT INITIALIZATION
-    // ===============================
-
-    async initializeComponents() {
-        console.log('🔧 Initializing components...');
-        
-        // Verify all components are loaded
-        this.verifyComponents();
-        
-        // Initialize UI animations
-        this.initializeAnimations();
-        
-        // Setup navigation
-        this.setupNavigation();
-        
-        // Initialize tooltips and other UI enhancements
-        this.initializeUIEnhancements();
-        
-        // Setup theme management
-        this.setupThemeManagement();
-        
-        console.log('✅ Components initialized');
-    }
-
     verifyComponents() {
         const requiredComponents = [
             'animeAPI',
@@ -295,240 +259,84 @@ class AnimeHubApp {
         };
     }
 
-    initializeAnimations() {
-        // Add entrance animations to existing elements
-        const elementsToAnimate = document.querySelectorAll(
-            '.navbar, .hero, .section-header'
-        );
-        
-        elementsToAnimate.forEach((element, index) => {
-            element.style.opacity = '0';
-            element.style.transform = 'translateY(20px)';
+    // ===============================
+    //   SIMPLIFIED COMPONENT INITIALIZATION
+    // ===============================
+
+    initializeBasicAnimations() {
+        try {
+            // Add entrance animations to existing elements (simplified)
+            const elementsToAnimate = document.querySelectorAll(
+                '.navbar, .hero, .section-header'
+            );
             
-            setTimeout(() => {
-                element.style.transition = 'all 0.6s ease';
-                element.style.opacity = '1';
-                element.style.transform = 'translateY(0)';
-            }, index * 100);
-        });
-        
-        // Setup intersection observer for scroll animations
-        this.setupScrollAnimations();
-    }
-
-    setupScrollAnimations() {
-        const scrollElements = document.querySelectorAll(
-            '.section-header, .anime-card, .footer-section'
-        );
-        
-        scrollElements.forEach(element => {
-            element.classList.add('scroll-reveal');
-            if (this.components.ui.intersectionObserver) {
-                this.components.ui.observeElement(element);
-            }
-        });
-    }
-
-    setupNavigation() {
-        // Setup navigation links
-        const navLinks = document.querySelectorAll('.nav-link');
-        navLinks.forEach(link => {
-            link.addEventListener('click', (e) => {
-                this.handleNavigation(e, link);
+            elementsToAnimate.forEach((element, index) => {
+                if (element) {
+                    element.style.opacity = '0';
+                    element.style.transform = 'translateY(20px)';
+                    
+                    setTimeout(() => {
+                        element.style.transition = 'all 0.6s ease';
+                        element.style.opacity = '1';
+                        element.style.transform = 'translateY(0)';
+                    }, index * 100);
+                }
             });
-        });
-        
-        // Setup smooth scrolling
-        this.setupSmoothScrolling();
-        
-        // Setup scroll to top
-        this.setupScrollToTop();
+        } catch (error) {
+            console.warn('Non-critical: Animation setup failed:', error);
+        }
     }
 
-    setupSmoothScrolling() {
-        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
-            anchor.addEventListener('click', (e) => {
-                e.preventDefault();
-                const target = document.querySelector(anchor.getAttribute('href'));
-                if (target) {
-                    target.scrollIntoView({
-                        behavior: 'smooth',
-                        block: 'start'
+    setupBasicNavigation() {
+        try {
+            // Setup navigation links (simplified)
+            const navLinks = document.querySelectorAll('.nav-link');
+            navLinks.forEach(link => {
+                if (link) {
+                    link.addEventListener('click', (e) => {
+                        e.preventDefault();
+                        // Update active state
+                        document.querySelectorAll('.nav-link').forEach(nl => nl.classList.remove('active'));
+                        link.classList.add('active');
                     });
                 }
             });
-        });
-    }
-
-    setupScrollToTop() {
-        // Create scroll to top button
-        const scrollButton = document.createElement('button');
-        scrollButton.className = 'scroll-to-top';
-        scrollButton.innerHTML = '<i class="fas fa-arrow-up"></i>';
-        scrollButton.setAttribute('aria-label', 'Scroll to top');
-        document.body.appendChild(scrollButton);
-        
-        // Show/hide on scroll
-        window.addEventListener('scroll', UTILS.throttle(() => {
-            if (window.pageYOffset > 500) {
-                scrollButton.classList.add('visible');
-            } else {
-                scrollButton.classList.remove('visible');
-            }
-        }, 100));
-        
-        // Click handler
-        scrollButton.addEventListener('click', () => {
-            window.scrollTo({
-                top: 0,
-                behavior: 'smooth'
-            });
-        });
-    }
-
-    initializeUIEnhancements() {
-        // Initialize lazy loading for images
-        this.setupLazyLoading();
-        
-        // Setup tooltips
-        this.setupTooltips();
-        
-        // Setup keyboard navigation
-        this.setupKeyboardNavigation();
-        
-        // Setup focus indicators
-        this.setupFocusIndicators();
-    }
-
-    setupLazyLoading() {
-        if ('IntersectionObserver' in window) {
-            const imageObserver = new IntersectionObserver((entries) => {
-                entries.forEach(entry => {
-                    if (entry.isIntersecting) {
-                        const img = entry.target;
-                        if (img.dataset.src) {
-                            img.src = img.dataset.src;
-                            img.removeAttribute('data-src');
-                            imageObserver.unobserve(img);
-                        }
-                    }
-                });
-            });
-            
-            // Observe images with data-src
-            document.querySelectorAll('img[data-src]').forEach(img => {
-                imageObserver.observe(img);
-            });
+        } catch (error) {
+            console.warn('Non-critical: Navigation setup failed:', error);
         }
     }
 
-    setupTooltips() {
-        // Simple tooltip implementation
-        document.addEventListener('mouseover', (e) => {
-            if (e.target.hasAttribute('data-tooltip')) {
-                this.showTooltip(e.target, e.target.getAttribute('data-tooltip'));
-            }
-        });
-        
-        document.addEventListener('mouseout', (e) => {
-            if (e.target.hasAttribute('data-tooltip')) {
-                this.hideTooltip();
-            }
-        });
-    }
-
-    setupKeyboardNavigation() {
-        // Skip link for accessibility
-        const skipLink = document.createElement('a');
-        skipLink.href = '#main-content';
-        skipLink.className = 'skip-link';
-        skipLink.textContent = 'Skip to main content';
-        document.body.insertBefore(skipLink, document.body.firstChild);
-        
-        // Tab navigation indicators
-        document.addEventListener('keydown', (e) => {
-            if (e.key === 'Tab') {
-                document.body.classList.add('keyboard-navigation');
-            }
-        });
-        
-        document.addEventListener('mousedown', () => {
-            document.body.classList.remove('keyboard-navigation');
-        });
-    }
-
-    setupFocusIndicators() {
-        // Enhanced focus styles for interactive elements
-        const style = document.createElement('style');
-        style.textContent = `
-            .keyboard-navigation *:focus {
-                outline: 2px solid var(--accent-primary) !important;
-                outline-offset: 2px !important;
-            }
+    initializeBasicUIEnhancements() {
+        try {
+            // Setup keyboard navigation (simplified)
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Tab') {
+                    document.body.classList.add('keyboard-navigation');
+                }
+            });
             
-            .skip-link {
-                position: absolute;
-                top: -40px;
-                left: 6px;
-                background: var(--accent-primary);
-                color: white;
-                padding: 8px;
-                border-radius: 4px;
-                text-decoration: none;
-                z-index: 9999;
-                transition: top 0.3s;
-            }
-            
-            .skip-link:focus {
-                top: 6px;
-            }
-            
-            .scroll-to-top {
-                position: fixed;
-                bottom: 2rem;
-                right: 2rem;
-                width: 50px;
-                height: 50px;
-                background: var(--accent-primary);
-                color: white;
-                border: none;
-                border-radius: 50%;
-                cursor: pointer;
-                opacity: 0;
-                visibility: hidden;
-                transform: scale(0.8);
-                transition: all 0.3s ease;
-                z-index: 1000;
-                box-shadow: var(--shadow-medium);
-            }
-            
-            .scroll-to-top.visible {
-                opacity: 1;
-                visibility: visible;
-                transform: scale(1);
-            }
-            
-            .scroll-to-top:hover {
-                background: var(--accent-secondary);
-                transform: scale(1.1);
-                box-shadow: var(--shadow-large);
-            }
-        `;
-        document.head.appendChild(style);
-    }
-
-    setupThemeManagement() {
-        // Respect user's color scheme preference
-        if (window.matchMedia) {
-            const mediaQuery = window.matchMedia('(prefers-color-scheme: light)');
-            this.handleThemeChange(mediaQuery);
-            mediaQuery.addListener(this.handleThemeChange.bind(this));
+            document.addEventListener('mousedown', () => {
+                document.body.classList.remove('keyboard-navigation');
+            });
+        } catch (error) {
+            console.warn('Non-critical: UI enhancements setup failed:', error);
         }
     }
 
     // ===============================
-    //   CONTENT LOADING
+    //   CONTENT LOADING (SIMPLIFIED)
     // ===============================
+
+    async loadInitialContentAsync() {
+        // Load content asynchronously without blocking initialization
+        try {
+            setTimeout(async () => {
+                await this.loadInitialContent();
+            }, 500);
+        } catch (error) {
+            console.warn('Non-critical: Failed to load initial content:', error);
+        }
+    }
 
     async loadInitialContent() {
         console.log('📄 Loading initial content...');
@@ -546,7 +354,7 @@ class AnimeHubApp {
             
             // Show skeleton loaders
             Object.values(containers).forEach(container => {
-                if (container) {
+                if (container && this.components.ui) {
                     this.components.ui.renderSkeletonCards(container);
                 }
             });
@@ -575,7 +383,7 @@ class AnimeHubApp {
     }
 
     async loadTrendingContent(container) {
-        if (!container) return;
+        if (!container || !this.components.api || !this.components.ui) return;
         
         try {
             await new Promise(resolve => setTimeout(resolve, 200)); // Stagger loading
@@ -588,16 +396,19 @@ class AnimeHubApp {
                 this.components.ui.showEmptyState(container, 'No trending anime found');
             }
         } catch (error) {
-            this.components.ui.showError(
-                container, 
-                'Failed to load trending anime',
-                () => this.loadTrendingContent(container)
-            );
+            console.error('Error loading trending content:', error);
+            if (this.components.ui) {
+                this.components.ui.showError(
+                    container, 
+                    'Failed to load trending anime',
+                    () => this.loadTrendingContent(container)
+                );
+            }
         }
     }
 
     async loadTopRatedContent(container) {
-        if (!container) return;
+        if (!container || !this.components.api || !this.components.ui) return;
         
         try {
             await new Promise(resolve => setTimeout(resolve, 400)); // Stagger loading
@@ -610,16 +421,19 @@ class AnimeHubApp {
                 this.components.ui.showEmptyState(container, 'No top rated anime found');
             }
         } catch (error) {
-            this.components.ui.showError(
-                container,
-                'Failed to load top rated anime',
-                () => this.loadTopRatedContent(container)
-            );
+            console.error('Error loading top rated content:', error);
+            if (this.components.ui) {
+                this.components.ui.showError(
+                    container,
+                    'Failed to load top rated anime',
+                    () => this.loadTopRatedContent(container)
+                );
+            }
         }
     }
 
     async loadNewReleasesContent(container) {
-        if (!container) return;
+        if (!container || !this.components.api || !this.components.ui) return;
         
         try {
             await new Promise(resolve => setTimeout(resolve, 600)); // Stagger loading
@@ -632,11 +446,14 @@ class AnimeHubApp {
                 this.components.ui.showEmptyState(container, 'No new releases found');
             }
         } catch (error) {
-            this.components.ui.showError(
-                container,
-                'Failed to load new releases',
-                () => this.loadNewReleasesContent(container)
-            );
+            console.error('Error loading new releases content:', error);
+            if (this.components.ui) {
+                this.components.ui.showError(
+                    container,
+                    'Failed to load new releases',
+                    () => this.loadNewReleasesContent(container)
+                );
+            }
         }
     }
 
@@ -645,61 +462,61 @@ class AnimeHubApp {
     // ===============================
 
     setupAppLifecycle() {
-        // Page visibility API
-        document.addEventListener('visibilitychange', () => {
-            if (document.visibilityState === 'visible') {
-                this.handleAppResume();
-            } else {
-                this.handleAppPause();
-            }
-        });
-        
-        // Before unload
-        window.addEventListener('beforeunload', () => {
-            this.handleAppUnload();
-        });
-        
-        // Page load complete
-        window.addEventListener('load', () => {
-            this.handlePageLoadComplete();
-        });
+        try {
+            // Page visibility API
+            document.addEventListener('visibilitychange', () => {
+                if (document.visibilityState === 'visible') {
+                    this.handleAppResume();
+                } else {
+                    this.handleAppPause();
+                }
+            });
+            
+            // Before unload
+            window.addEventListener('beforeunload', () => {
+                this.handleAppUnload();
+            });
+            
+            // Page load complete
+            window.addEventListener('load', () => {
+                this.handlePageLoadComplete();
+            });
+        } catch (error) {
+            console.warn('App lifecycle setup failed:', error);
+        }
     }
 
     handleAppResume() {
         console.log('📱 App resumed');
-        // Refresh data if it's been a while
-        const lastUpdate = new Date(this.appState.lastUpdated);
-        const now = new Date();
-        const timeDiff = now - lastUpdate;
-        
-        if (timeDiff > 30 * 60 * 1000) { // 30 minutes
-            this.refreshContent();
+        if (this.appState.lastUpdated) {
+            const lastUpdate = new Date(this.appState.lastUpdated);
+            const now = new Date();
+            const timeDiff = now - lastUpdate;
+            
+            if (timeDiff > 30 * 60 * 1000) { // 30 minutes
+                this.refreshContent();
+            }
         }
     }
 
     handleAppPause() {
         console.log('⏸️ App paused');
-        // Save any pending data
         this.savePendingData();
     }
 
     handleAppUnload() {
         console.log('👋 App unloading');
-        // Final cleanup and analytics
         this.finalCleanup();
     }
 
     handlePageLoadComplete() {
-        // Calculate and log performance metrics
         this.calculatePerformanceMetrics();
         
-        // Hide any remaining loading states
-        this.components.ui.hideLoadingSpinner();
+        if (this.components.ui && this.components.ui.hideLoadingSpinner) {
+            this.components.ui.hideLoadingSpinner();
+        }
         
-        // Mark as fully initialized
         this.isInitialized = true;
-        
-        // Announce to screen readers
         this.announceAppReady();
     }
 
@@ -709,14 +526,7 @@ class AnimeHubApp {
 
     handleGlobalError(error, type) {
         console.error(`Global ${type}:`, error);
-        
-        // Track error for analytics
         this.trackError(error, type);
-        
-        // Don't overwhelm user with too many error notifications
-        if (this.shouldShowErrorToUser(error, type)) {
-            this.showUserError(error, type);
-        }
     }
 
     handleAPIError(response, url) {
@@ -738,17 +548,81 @@ class AnimeHubApp {
     }
 
     handleInitializationError(error) {
-        // Critical error - show fallback UI
+        console.error('🚨 CRITICAL ERROR - SHOWING FALLBACK UI');
+        console.error('Error details:', error);
+        
+        // Show detailed error for debugging
+        const errorDetails = `
+            Error: ${error.message}
+            
+            Debugging info:
+            - CONFIG loaded: ${!!window.CONFIG}
+            - UTILS loaded: ${!!window.UTILS}
+            - animeAPI loaded: ${!!window.animeAPI}
+            - animeUI loaded: ${!!window.animeUI}
+            - animeSearch loaded: ${!!window.animeSearch}
+            - animeModal loaded: ${!!window.animeModal}
+            - Document ready: ${document.readyState}
+            - Online: ${navigator.onLine}
+            
+            Stack trace: ${error.stack}
+        `;
+        
+        // Critical error - show fallback UI with debugging info
         document.body.innerHTML = `
-            <div class="error-page">
-                <div class="error-content">
-                    <i class="fas fa-exclamation-triangle"></i>
-                    <h1>Something went wrong</h1>
-                    <p>We're having trouble loading AnimeHub. Please try refreshing the page.</p>
-                    <button onclick="window.location.reload()" class="btn btn-primary">
-                        <i class="fas fa-redo"></i>
-                        Refresh Page
+            <div style="
+                min-height: 100vh;
+                background: #0a0a0f;
+                color: #ffffff;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+                padding: 2rem;
+            ">
+                <div style="
+                    max-width: 600px;
+                    text-align: center;
+                    background: #1e1e2a;
+                    padding: 3rem;
+                    border-radius: 1rem;
+                    border: 1px solid rgba(255,255,255,0.1);
+                ">
+                    <div style="font-size: 4rem; margin-bottom: 1rem;">⚠️</div>
+                    <h1 style="margin-bottom: 1rem; color: #ef4444;">AnimeHub Loading Error</h1>
+                    <p style="margin-bottom: 2rem; color: #b4b4b8;">
+                        We're having trouble starting AnimeHub.
+                    </p>
+                    
+                    <button onclick="window.location.reload()" style="
+                        padding: 0.75rem 1.5rem;
+                        background: #6366f1;
+                        color: white;
+                        border: none;
+                        border-radius: 0.5rem;
+                        cursor: pointer;
+                        font-weight: 600;
+                        margin-right: 1rem;
+                    ">
+                        🔄 Refresh Page
                     </button>
+                    
+                    <details style="
+                        margin-top: 2rem;
+                        text-align: left;
+                        background: #111827;
+                        padding: 1rem;
+                        border-radius: 0.5rem;
+                        border: 1px solid #374151;
+                    ">
+                        <summary style="cursor: pointer; color: #f59e0b; margin-bottom: 1rem;">Technical Details</summary>
+                        <pre style="
+                            font-size: 0.875rem;
+                            color: #d1d5db;
+                            white-space: pre-wrap;
+                            word-break: break-word;
+                        ">${errorDetails}</pre>
+                    </details>
                 </div>
             </div>
         `;
@@ -767,29 +641,6 @@ class AnimeHubApp {
         console.log('📊 App state updated:', this.appState);
     }
 
-    handleNavigation(event, link) {
-        event.preventDefault();
-        const href = link.getAttribute('href');
-        
-        // Update active nav link
-        document.querySelectorAll('.nav-link').forEach(navLink => {
-            navLink.classList.remove('active');
-        });
-        link.classList.add('active');
-        
-        // Handle navigation
-        if (href.startsWith('#')) {
-            this.scrollToSection(href.substring(1));
-        }
-    }
-
-    scrollToSection(sectionId) {
-        const section = document.getElementById(sectionId);
-        if (section) {
-            section.scrollIntoView({ behavior: 'smooth' });
-        }
-    }
-
     handleNetworkChange(isOnline) {
         if (isOnline) {
             this.showOnlineMessage();
@@ -799,18 +650,13 @@ class AnimeHubApp {
         }
     }
 
-    handleThemeChange(mediaQuery) {
-        // Could implement light/dark theme switching
-        console.log('Theme preference:', mediaQuery.matches ? 'light' : 'dark');
-    }
-
     async refreshContent() {
         console.log('🔄 Refreshing content...');
         
-        // Clear API cache
-        this.components.api.clearCache();
+        if (this.components.api && this.components.api.clearCache) {
+            this.components.api.clearCache();
+        }
         
-        // Reload content
         await this.loadInitialContent();
     }
 
@@ -820,8 +666,7 @@ class AnimeHubApp {
     }
 
     finalCleanup() {
-        // Clean up any remaining resources
-        if (this.components.modal) {
+        if (this.components.modal && this.components.modal.destroy) {
             this.components.modal.destroy();
         }
     }
@@ -835,7 +680,6 @@ class AnimeHubApp {
     }
 
     announceAppReady() {
-        // Create announcement for screen readers
         const announcement = document.createElement('div');
         announcement.setAttribute('aria-live', 'polite');
         announcement.setAttribute('aria-atomic', 'true');
@@ -844,62 +688,16 @@ class AnimeHubApp {
         document.body.appendChild(announcement);
         
         setTimeout(() => {
-            document.body.removeChild(announcement);
+            if (announcement.parentNode) {
+                document.body.removeChild(announcement);
+            }
         }, 3000);
     }
 
-    // ===============================
-    //   USER NOTIFICATIONS
-    // ===============================
-
-    showUserError(error, type) {
-        // Could implement toast notifications
-        console.log('Showing user error:', error, type);
-    }
-
-    showRateLimitWarning() {
-        console.log('Rate limit warning shown');
-    }
-
-    showServerErrorWarning() {
-        console.log('Server error warning shown');
-    }
-
-    showOfflineMessage() {
-        console.log('Offline message shown');
-    }
-
-    showOnlineMessage() {
-        console.log('Online message shown');
-    }
-
-    showCompatibilityWarning(missingFeatures) {
-        console.warn('Browser compatibility warning:', missingFeatures);
-    }
-
-    // ===============================
-    //   ANALYTICS & TRACKING
-    // ===============================
-
-    trackError(error, type) {
-        console.log('Error tracked:', { error: error.message, type, timestamp: Date.now() });
-    }
-
-    trackContentLoad(section, count) {
-        console.log('Content loaded:', { section, count, timestamp: Date.now() });
-    }
-
-    shouldShowErrorToUser(error, type) {
-        // Logic to prevent error spam
-        return true; // Simplified for now
-    }
-
-    monitorConnectionQuality(connection) {
-        console.log('Connection quality:', {
-            effectiveType: connection.effectiveType,
-            downlink: connection.downlink,
-            rtt: connection.rtt
-        });
+    finalizeInitialization() {
+        this.isInitialized = true;
+        this.calculatePerformanceMetrics();
+        this.announceAppReady();
     }
 
     setupServiceWorker() {
@@ -914,30 +712,46 @@ class AnimeHubApp {
         }
     }
 
-    showTooltip(element, text) {
-        // Simple tooltip implementation
-        const tooltip = document.createElement('div');
-        tooltip.className = 'tooltip';
-        tooltip.textContent = text;
-        document.body.appendChild(tooltip);
-        
-        const rect = element.getBoundingClientRect();
-        tooltip.style.left = rect.left + (rect.width / 2) - (tooltip.offsetWidth / 2) + 'px';
-        tooltip.style.top = rect.top - tooltip.offsetHeight - 5 + 'px';
+    // ===============================
+    //   USER NOTIFICATIONS
+    // ===============================
+
+    showRateLimitWarning() {
+        console.log('⚠️ Rate limit warning shown');
     }
 
-    hideTooltip() {
-        const tooltip = document.querySelector('.tooltip');
-        if (tooltip) {
-            tooltip.remove();
-        }
+    showServerErrorWarning() {
+        console.log('⚠️ Server error warning shown');
+    }
+
+    showOfflineMessage() {
+        console.log('📱 Offline message shown');
+    }
+
+    showOnlineMessage() {
+        console.log('🌐 Online message shown');
+    }
+
+    showCompatibilityWarning(missingFeatures) {
+        console.warn('⚠️ Browser compatibility warning:', missingFeatures);
+    }
+
+    // ===============================
+    //   ANALYTICS & TRACKING
+    // ===============================
+
+    trackError(error, type) {
+        console.log('📊 Error tracked:', { error: error.message, type, timestamp: Date.now() });
+    }
+
+    trackContentLoad(section, count) {
+        console.log('📊 Content loaded:', { section, count, timestamp: Date.now() });
     }
 
     // ===============================
     //   PUBLIC API
     // ===============================
 
-    // Expose public methods
     async ready() {
         return this.initializationPromise;
     }
@@ -957,10 +771,17 @@ class AnimeHubApp {
     }
 
     clearData() {
-        // Clear all app data
-        this.components.api.clearCache();
-        this.components.search.clearSearchHistory();
-        localStorage.clear();
+        try {
+            if (this.components.api && this.components.api.clearCache) {
+                this.components.api.clearCache();
+            }
+            if (this.components.search && this.components.search.clearSearchHistory) {
+                this.components.search.clearSearchHistory();
+            }
+            localStorage.clear();
+        } catch (error) {
+            console.warn('Error clearing data:', error);
+        }
     }
 }
 
@@ -1049,15 +870,8 @@ function showFailureMessage(error) {
                 <div style="font-size: 4rem; margin-bottom: 1rem;">😵</div>
                 <h1 style="margin-bottom: 1rem; color: #ef4444;">Initialization Failed</h1>
                 <p style="margin-bottom: 2rem; color: #b4b4b8;">
-                    AnimeHub couldn't start. This might be due to:
+                    AnimeHub couldn't start. This might be due to network issues or browser compatibility.
                 </p>
-                
-                <ul style="text-align: left; color: #b4b4b8; line-height: 1.8; margin-bottom: 2rem;">
-                    <li>🌐 Network connection issues</li>
-                    <li>🚫 Browser blocking JavaScript files</li>
-                    <li>📱 Browser compatibility issues</li>
-                    <li>🔒 Security settings blocking content</li>
-                </ul>
                 
                 <button onclick="window.location.reload()" style="
                     padding: 0.75rem 1.5rem;
@@ -1070,18 +884,6 @@ function showFailureMessage(error) {
                     margin-right: 1rem;
                 ">
                     🔄 Try Again
-                </button>
-                
-                <button onclick="console.log('Error details:', ${JSON.stringify(error.message)})" style="
-                    padding: 0.75rem 1.5rem;
-                    background: #374151;
-                    color: white;
-                    border: none;
-                    border-radius: 0.5rem;
-                    cursor: pointer;
-                    font-weight: 600;
-                ">
-                    🔍 Check Console
                 </button>
             </div>
         </div>
