@@ -156,27 +156,54 @@ class AnimeUI {
         info.appendChild(year);
         info.appendChild(episodes);
 
-        // Ratings
-        const ratings = this.createRatingsSection(anime);
+        // Average Rating Only
+        const ratings = this.createSimpleRatingsSection(anime);
 
         // Genres
         const genres = this.createGenresSection(anime.genres);
 
-        // Description
-        const description = document.createElement('p');
-        description.className = 'card-description';
-        description.textContent = UTILS.truncateText(
-            UTILS.stripHtml(anime.description), 
-            150
-        );
+        // No description - removed as requested
 
         content.appendChild(title);
         content.appendChild(info);
         content.appendChild(ratings);
         content.appendChild(genres);
-        content.appendChild(description);
 
         return content;
+    }
+
+    createSimpleRatingsSection(anime) {
+        const ratingsContainer = document.createElement('div');
+        ratingsContainer.className = 'card-ratings card-ratings-simple';
+
+        // Show only the main/average rating
+        const mainRating = this.getMainRating(anime);
+        if (mainRating) {
+            const mainRatingEl = document.createElement('div');
+            mainRatingEl.className = 'main-rating-only';
+            
+            // Add special class for average ratings
+            const isAverage = mainRating.isAverage || mainRating.source.includes('Avg');
+            const scoreClass = isAverage ? 'rating-score-large average-highlight' : 'rating-score-large';
+            const sourceClass = isAverage ? 'rating-source average-source' : 'rating-source';
+            
+            mainRatingEl.innerHTML = `
+                <div class="${scoreClass}">${mainRating.score}</div>
+                <div class="${sourceClass}">${mainRating.source}</div>
+            `;
+            ratingsContainer.appendChild(mainRatingEl);
+        } else {
+            // No rating available
+            const noRatingEl = document.createElement('div');
+            noRatingEl.className = 'no-rating';
+            noRatingEl.innerHTML = `
+                <div class="rating-score-large">N/A</div>
+                <div class="rating-source">No Rating</div>
+            `;
+            ratingsContainer.appendChild(noRatingEl);
+        }
+
+        return ratingsContainer;
     }
 
     createRatingsSection(anime) {

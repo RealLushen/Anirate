@@ -960,18 +960,28 @@
 }
 
 /* ===============================
-   RESPONSIVE DESIGN FOR RATINGS
+   RESPONSIVE DESIGN FOR SIMPLIFIED CARDS
 =============================== */
 
 @media (max-width: 768px) {
-    .card-ratings-prominent {
-        flex-direction: column;
-        gap: var(--spacing-sm);
-        text-align: center;
+    .card-ratings-simple {
+        padding: var(--spacing-sm);
+        margin-bottom: var(--spacing-sm);
     }
     
     .rating-score-large {
-        font-size: 1.5rem;
+        font-size: 1.75rem;
+    }
+    
+    .card-title {
+        font-size: var(--font-size-base);
+        margin-bottom: var(--spacing-xs);
+    }
+    
+    .card-info {
+        flex-direction: column;
+        gap: var(--spacing-xs);
+        text-align: center;
     }
     
     .ratings-grid {
@@ -1006,6 +1016,14 @@
 }
 
 @media (max-width: 480px) {
+    .card-ratings-simple {
+        padding: var(--spacing-xs);
+    }
+    
+    .rating-score-large {
+        font-size: 1.5rem;
+    }
+    
     .ratings-title {
         font-size: var(--font-size-xl);
         text-align: center;
@@ -1019,8 +1037,12 @@
         grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
     }
     
-    .secondary-ratings {
-        justify-content: center;
-        flex-wrap: wrap;
+    .card-genres {
+        gap: 4px;
+    }
+    
+    .genre-tag {
+        padding: 2px 6px;
+        font-size: 10px;
     }
 }
