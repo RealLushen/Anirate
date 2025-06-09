@@ -176,20 +176,18 @@ class AnimeUI {
         const ratingsContainer = document.createElement('div');
         ratingsContainer.className = 'card-ratings card-ratings-simple';
 
-        // Show only the main/average rating
+        // Show only the main/average rating NUMBER
         const mainRating = this.getMainRating(anime);
         if (mainRating) {
             const mainRatingEl = document.createElement('div');
             mainRatingEl.className = 'main-rating-only';
             
-            // Add special class for average ratings
+            // Show only the score, no source label
             const isAverage = mainRating.isAverage || mainRating.source.includes('Avg');
-            const scoreClass = isAverage ? 'rating-score-large average-highlight' : 'rating-score-large';
-            const sourceClass = isAverage ? 'rating-source average-source' : 'rating-source';
+            const scoreClass = isAverage ? 'rating-score-only average-highlight' : 'rating-score-only';
             
             mainRatingEl.innerHTML = `
                 <div class="${scoreClass}">${mainRating.score}</div>
-                <div class="${sourceClass}">${mainRating.source}</div>
             `;
             ratingsContainer.appendChild(mainRatingEl);
         } else {
@@ -197,8 +195,7 @@ class AnimeUI {
             const noRatingEl = document.createElement('div');
             noRatingEl.className = 'no-rating';
             noRatingEl.innerHTML = `
-                <div class="rating-score-large">N/A</div>
-                <div class="rating-source">No Rating</div>
+                <div class="rating-score-only">N/A</div>
             `;
             ratingsContainer.appendChild(noRatingEl);
         }
@@ -493,10 +490,6 @@ class AnimeUI {
 
                 ${this.createModalRatings(anime)}
                 
-                <div class="modal-description">
-                    <p>${UTILS.stripHtml(anime.description) || 'No description available.'}</p>
-                </div>
-
                 ${this.createModalGenres(anime.genres)}
                 
                 ${this.createStudiosSection(anime.studios)}

@@ -960,17 +960,21 @@
 }
 
 /* ===============================
-   RESPONSIVE DESIGN FOR SIMPLIFIED CARDS
+   RESPONSIVE DESIGN FOR ULTRA-SIMPLIFIED CARDS
 =============================== */
 
 @media (max-width: 768px) {
     .card-ratings-simple {
-        padding: var(--spacing-sm);
+        padding: var(--spacing-md);
         margin-bottom: var(--spacing-sm);
     }
     
-    .rating-score-large {
-        font-size: 1.75rem;
+    .rating-score-only {
+        font-size: 2rem;
+    }
+    
+    .average-highlight {
+        font-size: 2.25rem;
     }
     
     .card-title {
@@ -982,6 +986,11 @@
         flex-direction: column;
         gap: var(--spacing-xs);
         text-align: center;
+    }
+    
+    .card-info::before,
+    .card-info::after {
+        display: none;
     }
     
     .ratings-grid {
@@ -1017,11 +1026,15 @@
 
 @media (max-width: 480px) {
     .card-ratings-simple {
-        padding: var(--spacing-xs);
+        padding: var(--spacing-sm);
     }
     
-    .rating-score-large {
-        font-size: 1.5rem;
+    .rating-score-only {
+        font-size: 1.75rem;
+    }
+    
+    .average-highlight {
+        font-size: 2rem;
     }
     
     .ratings-title {
@@ -1044,5 +1057,9 @@
     .genre-tag {
         padding: 2px 6px;
         font-size: 10px;
+    }
+    
+    .card-info {
+        font-size: var(--font-size-xs);
     }
 }
