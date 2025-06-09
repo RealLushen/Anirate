@@ -181,24 +181,109 @@ class AnimeUI {
 
     createRatingsSection(anime) {
         const ratingsContainer = document.createElement('div');
-        ratingsContainer.className = 'card-ratings';
+        ratingsContainer.className = 'card-ratings card-ratings-prominent';
 
-        // AniList/MAL rating
-        if (anime.rating?.anilist && anime.rating.anilist !== CONFIG.DEFAULTS.FALLBACK_RATING) {
-            const rating = this.createRatingItem('anilist', anime.rating.anilist, '10');
-            ratingsContainer.appendChild(rating);
-        } else if (anime.rating?.mal && anime.rating.mal !== CONFIG.DEFAULTS.FALLBACK_RATING) {
-            const rating = this.createRatingItem('mal', anime.rating.mal, '10');
-            ratingsContainer.appendChild(rating);
+        // Create prominent rating display
+        const mainRating = this.getMainRating(anime);
+        if (mainRating) {
+            const mainRatingEl = document.createElement('div');
+            mainRatingEl.className = 'main-rating';
+            mainRatingEl.innerHTML = `
+                <div class="rating-score-large">${mainRating.score}</div>
+                <div class="rating-source">${mainRating.source}</div>
+            `;
+            ratingsContainer.appendChild(mainRatingEl);
         }
 
-        // IMDB rating (if available)
-        if (anime.rating?.imdb && anime.rating.imdb !== CONFIG.DEFAULTS.FALLBACK_RATING) {
-            const rating = this.createRatingItem('imdb', anime.rating.imdb, '10');
-            ratingsContainer.appendChild(rating);
+        // Add secondary ratings as smaller indicators
+        const secondaryRatings = this.getSecondaryRatings(anime);
+        if (secondaryRatings.length > 0) {
+            const secondaryContainer = document.createElement('div');
+            secondaryContainer.className = 'secondary-ratings';
+            
+            secondaryRatings.forEach(rating => {
+                const ratingEl = this.createSmallRatingItem(rating.source.toLowerCase(), rating.score, rating.max);
+                secondaryContainer.appendChild(ratingEl);
+            });
+            
+            ratingsContainer.appendChild(secondaryContainer);
         }
 
         return ratingsContainer;
+    }
+
+    getMainRating(anime) {
+        // Prioritize the highest available rating
+        if (anime.enhancedRatings) {
+            const ratings = [
+                anime.enhancedRatings.anilist,
+                anime.enhancedRatings.mal,
+                anime.enhancedRatings.imdb
+            ].filter(r => r && r.score !== CONFIG.DEFAULTS.FALLBACK_RATING);
+            
+            if (ratings.length > 0) {
+                // Return the highest rated source
+                return ratings.sort((a, b) => parseFloat(b.score) - parseFloat(a.score))[0];
+            }
+        }
+
+        // Fallback to original rating
+        if (anime.rating?.anilist && anime.rating.anilist !== CONFIG.DEFAULTS.FALLBACK_RATING) {
+            return { score: anime.rating.anilist, source: 'AniList', max: '10' };
+        }
+        if (anime.rating?.mal && anime.rating.mal !== CONFIG.DEFAULTS.FALLBACK_RATING) {
+            return { score: anime.rating.mal, source: 'MAL', max: '10' };
+        }
+        
+        return null;
+    }
+
+    getSecondaryRatings(anime) {
+        const ratings = [];
+        
+        if (anime.enhancedRatings) {
+            if (anime.enhancedRatings.anilist && anime.enhancedRatings.anilist.score !== CONFIG.DEFAULTS.FALLBACK_RATING) {
+                ratings.push(anime.enhancedRatings.anilist);
+            }
+            if (anime.enhancedRatings.mal && anime.enhancedRatings.mal.score !== CONFIG.DEFAULTS.FALLBACK_RATING) {
+                ratings.push(anime.enhancedRatings.mal);
+            }
+            if (anime.enhancedRatings.imdb && anime.enhancedRatings.imdb.score !== CONFIG.DEFAULTS.FALLBACK_RATING) {
+                ratings.push(anime.enhancedRatings.imdb);
+            }
+        } else {
+            // Fallback to original ratings
+            if (anime.rating?.anilist && anime.rating.anilist !== CONFIG.DEFAULTS.FALLBACK_RATING) {
+                ratings.push({ score: anime.rating.anilist, source: 'AniList', max: '10' });
+            }
+            if (anime.rating?.mal && anime.rating.mal !== CONFIG.DEFAULTS.FALLBACK_RATING) {
+                ratings.push({ score: anime.rating.mal, source: 'MyAnimeList', max: '10' });
+            }
+        }
+
+        // Return all except the main (highest) rating
+        if (ratings.length > 1) {
+            const sorted = ratings.sort((a, b) => parseFloat(b.score) - parseFloat(a.score));
+            return sorted.slice(1); // Skip the highest (main) rating
+        }
+
+        return [];
+    }
+
+    createSmallRatingItem(source, score, max) {
+        const ratingItem = document.createElement('div');
+        ratingItem.className = `rating-item-small rating-${source}`;
+
+        const icon = document.createElement('i');
+        icon.className = 'fas fa-star';
+
+        const scoreSpan = document.createElement('span');
+        scoreSpan.textContent = score;
+
+        ratingItem.appendChild(icon);
+        ratingItem.appendChild(scoreSpan);
+
+        return ratingItem;
     }
 
     createRatingItem(source, score, max) {
@@ -385,51 +470,156 @@ class AnimeUI {
     }
 
     createModalRatings(anime) {
+        let ratingsHTML = '<div class="modal-ratings-enhanced">';
+
+        // Main ratings section - much more prominent
+        ratingsHTML += '<div class="main-ratings-section">';
+        ratingsHTML += '<h3 class="ratings-title"><i class="fas fa-star"></i> Anime Ratings</h3>';
+        
+        const allRatings = this.getAllRatings(anime);
+        
+        if (allRatings.length === 0) {
+            ratingsHTML += '<div class="no-ratings">No ratings available</div>';
+        } else {
+            ratingsHTML += '<div class="ratings-grid">';
+            
+            allRatings.forEach(rating => {
+                const colorClass = this.getRatingColorClass(parseFloat(rating.score));
+                ratingsHTML += `
+                    <div class="rating-card-large ${rating.source.toLowerCase()}">
+                        <div class="rating-platform">
+                            <img src="${this.getPlatformIcon(rating.source)}" alt="${rating.source}" class="platform-icon">
+                            <span class="platform-name">${rating.source}</span>
+                        </div>
+                        <div class="rating-score-huge ${colorClass}">${rating.score}</div>
+                        <div class="rating-max">/ ${rating.max}</div>
+                        ${rating.voters ? `<div class="rating-voters">${rating.voters} votes</div>` : ''}
+                    </div>
+                `;
+            });
+            
+            ratingsHTML += '</div>';
+
+            // Average rating if multiple sources
+            if (allRatings.length > 1) {
+                const validScores = allRatings.map(r => parseFloat(r.score)).filter(s => !isNaN(s));
+                const average = (validScores.reduce((a, b) => a + b) / validScores.length).toFixed(1);
+                const avgColorClass = this.getRatingColorClass(parseFloat(average));
+                
+                ratingsHTML += `
+                    <div class="average-rating">
+                        <div class="average-rating-content">
+                            <span class="average-label">Average Rating</span>
+                            <span class="average-score ${avgColorClass}">${average}/10</span>
+                            <span class="average-sources">from ${allRatings.length} sources</span>
+                        </div>
+                    </div>
+                `;
+            }
+        }
+        
+        ratingsHTML += '</div>';
+
+        // Episode ratings section
+        if (anime.enhancedRatings && anime.enhancedRatings.episodes && anime.enhancedRatings.episodes.length > 0) {
+            ratingsHTML += this.createEpisodeRatingsSection(anime.enhancedRatings.episodes);
+        }
+
+        ratingsHTML += '</div>';
+
+        return ratingsHTML;
+    }
+
+    getAllRatings(anime) {
         const ratings = [];
 
-        // AniList rating
-        if (anime.rating?.anilist && anime.rating.anilist !== CONFIG.DEFAULTS.FALLBACK_RATING) {
-            ratings.push({
-                source: 'AniList',
-                score: anime.rating.anilist,
-                max: '10.0',
-                class: 'anilist'
+        if (anime.enhancedRatings) {
+            if (anime.enhancedRatings.anilist && anime.enhancedRatings.anilist.score !== CONFIG.DEFAULTS.FALLBACK_RATING) {
+                ratings.push({
+                    ...anime.enhancedRatings.anilist,
+                    voters: anime.favourites ? `${anime.favourites} favorites` : null
+                });
+            }
+            if (anime.enhancedRatings.mal && anime.enhancedRatings.mal.score !== CONFIG.DEFAULTS.FALLBACK_RATING) {
+                ratings.push({
+                    ...anime.enhancedRatings.mal,
+                    voters: anime.members ? `${anime.members} members` : null
+                });
+            }
+            if (anime.enhancedRatings.imdb && anime.enhancedRatings.imdb.score !== CONFIG.DEFAULTS.FALLBACK_RATING) {
+                ratings.push(anime.enhancedRatings.imdb);
+            }
+        } else {
+            // Fallback to basic ratings
+            if (anime.rating?.anilist && anime.rating.anilist !== CONFIG.DEFAULTS.FALLBACK_RATING) {
+                ratings.push({
+                    score: anime.rating.anilist,
+                    source: 'AniList',
+                    max: '10.0'
+                });
+            }
+            if (anime.rating?.mal && anime.rating.mal !== CONFIG.DEFAULTS.FALLBACK_RATING) {
+                ratings.push({
+                    score: anime.rating.mal,
+                    source: 'MyAnimeList', 
+                    max: '10.0'
+                });
+            }
+        }
+
+        return ratings;
+    }
+
+    createEpisodeRatingsSection(episodes) {
+        let html = '<div class="episode-ratings-section">';
+        html += '<h3 class="ratings-title"><i class="fas fa-tv"></i> Episode Ratings</h3>';
+        
+        if (episodes.length === 0) {
+            html += '<div class="no-episode-ratings">Episode ratings not available</div>';
+        } else {
+            html += '<div class="episode-ratings-container">';
+            
+            // Show first 12 episodes or all if less
+            const displayEpisodes = episodes.slice(0, 12);
+            
+            displayEpisodes.forEach(episode => {
+                const colorClass = this.getRatingColorClass(parseFloat(episode.rating));
+                html += `
+                    <div class="episode-rating-item">
+                        <div class="episode-number">EP ${episode.number}</div>
+                        <div class="episode-rating ${colorClass}">${episode.rating}</div>
+                        ${episode.title ? `<div class="episode-title">${episode.title}</div>` : ''}
+                    </div>
+                `;
             });
+            
+            if (episodes.length > 12) {
+                html += `<div class="more-episodes">+${episodes.length - 12} more episodes</div>`;
+            }
+            
+            html += '</div>';
         }
+        
+        html += '</div>';
+        return html;
+    }
 
-        // MAL rating
-        if (anime.rating?.mal && anime.rating.mal !== CONFIG.DEFAULTS.FALLBACK_RATING) {
-            ratings.push({
-                source: 'MyAnimeList',
-                score: anime.rating.mal,
-                max: '10.0',
-                class: 'mal'
-            });
-        }
+    getRatingColorClass(score) {
+        if (score >= 8.5) return 'rating-excellent';
+        if (score >= 7.5) return 'rating-great';
+        if (score >= 6.5) return 'rating-good';
+        if (score >= 5.5) return 'rating-average';
+        return 'rating-poor';
+    }
 
-        // IMDB rating
-        if (anime.ratings?.imdb && anime.ratings.imdb !== CONFIG.DEFAULTS.FALLBACK_RATING) {
-            ratings.push({
-                source: 'IMDB',
-                score: anime.ratings.imdb,
-                max: '10.0',
-                class: 'imdb'
-            });
-        }
-
-        if (ratings.length === 0) {
-            return '<div class="modal-ratings"><div class="rating-card"><div class="rating-source">No Ratings Available</div></div></div>';
-        }
-
-        const ratingsHTML = ratings.map(rating => `
-            <div class="rating-card">
-                <div class="rating-source">${rating.source}</div>
-                <div class="rating-score ${rating.class}">${rating.score}</div>
-                <div class="rating-max">/ ${rating.max}</div>
-            </div>
-        `).join('');
-
-        return `<div class="modal-ratings">${ratingsHTML}</div>`;
+    getPlatformIcon(source) {
+        const icons = {
+            'AniList': 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%2302a9ff"><path d="M24 17.53v2.421c0 .71-.391 1.101-1.1 1.101h-5.85c-.71 0-1.1-.391-1.1-1.101V17.53c0-.71.39-1.101 1.1-1.101h5.85c.709 0 1.1.391 1.1 1.101z"/><path d="M14.22 8.1c.71 0 1.1.391 1.1 1.101v10.431c0 .71-.39 1.101-1.1 1.101H8.37c-.71 0-1.1-.391-1.1-1.101V9.201c0-.71.39-1.101 1.1-1.101h5.85z"/><path d="M6.67 3.21c.71 0 1.1.391 1.1 1.101v15.321c0 .71-.39 1.101-1.1 1.101H.82c-.71 0-1.1-.391-1.1-1.101V4.311c0-.71.39-1.101 1.1-1.101h5.85z"/></svg>',
+            'MyAnimeList': 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%232e51a2"><rect width="24" height="24" rx="4"/><text x="12" y="16" font-family="Arial" font-size="8" fill="white" text-anchor="middle">MAL</text></svg>',
+            'IMDB': 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%23f5c518"><rect width="24" height="24" rx="4" fill="%23000"/><rect x="2" y="4" width="20" height="16" rx="2" fill="%23f5c518"/><text x="12" y="14" font-family="Arial" font-size="6" font-weight="bold" text-anchor="middle">IMDb</text></svg>'
+        };
+        
+        return icons[source] || 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%236366f1"><circle cx="12" cy="12" r="10"/></svg>';
     }
 
     createModalGenres(genres) {

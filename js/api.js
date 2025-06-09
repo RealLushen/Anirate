@@ -400,8 +400,8 @@ class AnimeAPI {
                 display: UTILS.formatTitle(anime.title)
             },
             image: {
-                large: anime.coverImage?.large || CONFIG.DEFAULTS.FALLBACK_IMAGE,
-                medium: anime.coverImage?.medium || CONFIG.DEFAULTS.FALLBACK_IMAGE
+                large: anime.coverImage?.extraLarge || anime.coverImage?.large || CONFIG.DEFAULTS.FALLBACK_IMAGE,
+                medium: anime.coverImage?.large || anime.coverImage?.medium || CONFIG.DEFAULTS.FALLBACK_IMAGE
             },
             banner: anime.bannerImage,
             description: UTILS.stripHtml(anime.description),
@@ -448,8 +448,8 @@ class AnimeAPI {
                 display: anime.title_english || anime.title
             },
             image: {
-                large: anime.images?.jpg?.large_image_url || CONFIG.DEFAULTS.FALLBACK_IMAGE,
-                medium: anime.images?.jpg?.image_url || CONFIG.DEFAULTS.FALLBACK_IMAGE
+                large: anime.images?.webp?.large_image_url || anime.images?.jpg?.large_image_url || CONFIG.DEFAULTS.FALLBACK_IMAGE,
+                medium: anime.images?.webp?.image_url || anime.images?.jpg?.image_url || CONFIG.DEFAULTS.FALLBACK_IMAGE
             },
             description: anime.synopsis,
             episodes: anime.episodes,
@@ -566,17 +566,92 @@ class AnimeAPI {
 
         if (!mainData) return null;
 
-        // Try to get IMDB rating if we have an English title
-        const englishTitle = mainData.title.english || mainData.title.display;
-        if (englishTitle) {
+        // Initialize enhanced ratings object
+        const enhancedRatings = {
+            anilist: null,
+            mal: null,
+            imdb: null,
+            episodes: []
+        };
+
+        // Get AniList rating
+        if (mainData.rating?.anilist && mainData.rating.anilist !== CONFIG.DEFAULTS.FALLBACK_RATING) {
+            enhancedRatings.anilist = {
+                score: mainData.rating.anilist,
+                max: '10.0',
+                source: 'AniList'
+            };
+        }
+
+        // Get MAL rating if not already from Jikan
+        if (source !== 'jikan') {
             try {
-                const omdbResults = await this.searchOMDBByTitle(englishTitle);
+                const malResults = await this.searchJikan(mainData.title.english || mainData.title.romaji || mainData.title.display);
+                if (malResults.results && malResults.results.length > 0) {
+                    const malAnime = malResults.results[0];
+                    if (malAnime.rating?.mal && malAnime.rating.mal !== CONFIG.DEFAULTS.FALLBACK_RATING) {
+                        enhancedRatings.mal = {
+                            score: malAnime.rating.mal,
+                            max: '10.0',
+                            source: 'MyAnimeList',
+                            malId: malAnime.id
+                        };
+
+                        // Get detailed MAL data including episode ratings
+                        try {
+                            const malDetails = await this.getJikanDetails(malAnime.id);
+                            if (malDetails) {
+                                enhancedRatings.mal.score = malDetails.rating.mal;
+                                
+                                // Try to get episode ratings from MAL
+                                const episodeRatings = await this.getJikanEpisodeRatings(malAnime.id);
+                                if (episodeRatings && episodeRatings.length > 0) {
+                                    enhancedRatings.episodes = episodeRatings;
+                                }
+                            }
+                        } catch (error) {
+                            console.warn('Could not get detailed MAL data:', error);
+                        }
+                    }
+                }
+            } catch (error) {
+                console.warn('Could not fetch MAL data:', error);
+            }
+        } else {
+            // We already have MAL data
+            if (mainData.rating?.mal && mainData.rating.mal !== CONFIG.DEFAULTS.FALLBACK_RATING) {
+                enhancedRatings.mal = {
+                    score: mainData.rating.mal,
+                    max: '10.0',
+                    source: 'MyAnimeList',
+                    malId: mainData.id
+                };
+
+                // Get episode ratings
+                try {
+                    const episodeRatings = await this.getJikanEpisodeRatings(mainData.id);
+                    if (episodeRatings && episodeRatings.length > 0) {
+                        enhancedRatings.episodes = episodeRatings;
+                    }
+                } catch (error) {
+                    console.warn('Could not get episode ratings:', error);
+                }
+            }
+        }
+
+        // Try to get IMDB rating
+        const searchTitle = mainData.title.english || mainData.title.romaji || mainData.title.display;
+        if (searchTitle) {
+            try {
+                const omdbResults = await this.searchOMDBByTitle(searchTitle);
                 if (omdbResults.length > 0) {
                     const imdbData = await this.getOMDBDetails(omdbResults[0].id);
-                    if (imdbData) {
-                        mainData.ratings = {
-                            ...mainData.rating,
-                            imdb: imdbData.rating.imdb
+                    if (imdbData && imdbData.rating?.imdb && imdbData.rating.imdb !== CONFIG.DEFAULTS.FALLBACK_RATING) {
+                        enhancedRatings.imdb = {
+                            score: imdbData.rating.imdb,
+                            max: '10.0',
+                            source: 'IMDB',
+                            imdbId: imdbData.id
                         };
                     }
                 }
@@ -585,7 +660,42 @@ class AnimeAPI {
             }
         }
 
+        // Enhance main data with all ratings
+        mainData.enhancedRatings = enhancedRatings;
+        
+        // Calculate average rating
+        const validRatings = [
+            enhancedRatings.anilist?.score,
+            enhancedRatings.mal?.score,
+            enhancedRatings.imdb?.score
+        ].filter(score => score && score !== CONFIG.DEFAULTS.FALLBACK_RATING).map(score => parseFloat(score));
+
+        if (validRatings.length > 0) {
+            mainData.averageRating = (validRatings.reduce((a, b) => a + b) / validRatings.length).toFixed(1);
+            mainData.ratingCount = validRatings.length;
+        }
+
         return mainData;
+    }
+
+    async getJikanEpisodeRatings(malId) {
+        try {
+            // Try to get episode data from Jikan
+            const episodesData = await this.fetchFromJikan(`/anime/${malId}/episodes`);
+            
+            if (episodesData && episodesData.data) {
+                return episodesData.data.map(episode => ({
+                    number: episode.mal_id,
+                    title: episode.title,
+                    rating: episode.score || null,
+                    aired: episode.aired,
+                    duration: episode.duration
+                })).filter(ep => ep.rating); // Only episodes with ratings
+            }
+        } catch (error) {
+            console.warn('Could not fetch episode ratings:', error);
+        }
+        return [];
     }
 
     removeDuplicates(results) {

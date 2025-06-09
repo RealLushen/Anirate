@@ -152,6 +152,7 @@ const GRAPHQL_QUERIES = {
                         native
                     }
                     coverImage {
+                        extraLarge
                         large
                         medium
                     }
@@ -174,6 +175,7 @@ const GRAPHQL_QUERIES = {
                     averageScore
                     popularity
                     favourites
+                    meanScore
                     studios {
                         nodes {
                             name
@@ -205,6 +207,7 @@ const GRAPHQL_QUERIES = {
                     native
                 }
                 coverImage {
+                    extraLarge
                     large
                     medium
                 }
@@ -225,11 +228,13 @@ const GRAPHQL_QUERIES = {
                 status
                 genres
                 averageScore
+                meanScore
                 popularity
                 favourites
                 source
                 season
                 seasonYear
+                format
                 studios {
                     nodes {
                         name
@@ -268,6 +273,7 @@ const GRAPHQL_QUERIES = {
                             english
                         }
                         coverImage {
+                            large
                             medium
                         }
                         type
@@ -283,10 +289,21 @@ const GRAPHQL_QUERIES = {
                                 english
                             }
                             coverImage {
+                                large
                                 medium
                             }
                             averageScore
                         }
+                    }
+                }
+                stats {
+                    scoreDistribution {
+                        score
+                        amount
+                    }
+                    statusDistribution {
+                        status
+                        amount
                     }
                 }
             }
@@ -305,6 +322,7 @@ const GRAPHQL_QUERIES = {
                         native
                     }
                     coverImage {
+                        extraLarge
                         large
                         medium
                     }
@@ -312,7 +330,9 @@ const GRAPHQL_QUERIES = {
                     description
                     episodes
                     averageScore
+                    meanScore
                     popularity
+                    favourites
                     genres
                     startDate {
                         year
@@ -335,6 +355,7 @@ const GRAPHQL_QUERIES = {
                         native
                     }
                     coverImage {
+                        extraLarge
                         large
                         medium
                     }
@@ -342,7 +363,9 @@ const GRAPHQL_QUERIES = {
                     description
                     episodes
                     averageScore
+                    meanScore
                     popularity
+                    favourites
                     genres
                     startDate {
                         year
@@ -365,6 +388,7 @@ const GRAPHQL_QUERIES = {
                         native
                     }
                     coverImage {
+                        extraLarge
                         large
                         medium
                     }
@@ -372,7 +396,9 @@ const GRAPHQL_QUERIES = {
                     description
                     episodes
                     averageScore
+                    meanScore
                     popularity
+                    favourites
                     genres
                     startDate {
                         year
